@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gastos Compartidos — Martin & Anita</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --card: #faf9f6;
+  --border: #e8e4dc;
+  --text: #1a1814;
+  --muted: #8a8478;
+  --martin: #2d5016;
+  --martin-light: #e8f0e0;
+  --anita: #7c1d3a;
+  --anita-light: #f5e0e8;
+  --shared: #1a3a5c;
+  --shared-light: #e0eaf5;
+  --accent: #c8a84b;
+  --danger: #c0392b;
+  --green: #27ae60;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--text);
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.5px;
+}
+.header-title span { color: var(--accent); }
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.month-btn {
+  background: transparent;
+  border: 1px solid #ffffff30;
+  color: #fff;
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.month-btn:hover { background: #ffffff20; }
+.month-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ── BALANCE STRIP ── */
+.balance-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+}
+.balance-card {
+  padding: 18px 24px;
+  border-right: 1px solid var(--border);
+}
+.balance-card:last-child { border-right: none; }
+.balance-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.balance-amount {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.balance-amount.martin { color: var(--martin); }
+.balance-amount.anita { color: var(--anita); }
+.balance-amount.result { color: var(--text); }
+.balance-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.result-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.result-badge.owes-anita { background: var(--anita-light); color: var(--anita); }
+.result-badge.owes-martin { background: var(--martin-light); color: var(--martin); }
+.result-badge.even { background: #e8f5e9; color: var(--green); }
+
+/* ── LAYOUT ── */
+.layout { display: flex; gap: 0; height: calc(100vh - 130px); overflow: hidden; }
+
+/* ── FORM PANEL ── */
+.form-panel {
+  width: 320px;
+  min-width: 320px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form-panel::-webkit-scrollbar { width: 3px; }
+.form-panel::-webkit-scrollbar-thumb { background: var(--border); }
+
+.form-section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--muted); }
+
+/* Quien pago radio */
+.quien-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.quien-btn {
+  padding: 8px 4px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all .12s;
+  color: var(--muted);
+}
+.quien-btn.martin.active { background: var(--martin-light); border-color: var(--martin); color: var(--martin); }
+.quien-btn.anita.active { background: var(--anita-light); border-color: var(--anita); color: var(--anita); }
+.quien-btn.compartido.active { background: var(--shared-light); border-color: var(--shared); color: var(--shared); }
+
+/* Split toggle */
+.split-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.split-btn {
+  padding: 7px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all .12s;
+}
+.split-btn.active { background: #1a1814; border-color: #1a1814; color: #fff; }
+
+.add-btn {
+  width: 100%;
+  padding: 11px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  letter-spacing: .3px;
+}
+.add-btn:hover { opacity: .85; }
+
+.divider { border: none; border-top: 1px solid var(--border); }
+
+/* Category quick-add */
+.cat-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.cat-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  transition: all .12s;
+}
+.cat-pill.active {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+
+/* ── MAIN CONTENT ── */
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.main::-webkit-scrollbar { width: 4px; }
+.main::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* Summary table */
+.summary-section {
+  padding: 20px 24px 0;
+}
+.summary-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.summary-table thead tr {
+  background: var(--text);
+  color: #fff;
+}
+.summary-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+.summary-table th:last-child, .summary-table td:last-child { text-align: right; }
+.summary-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.summary-table tbody tr:hover { background: var(--card); }
+.summary-table td { padding: 10px 14px; }
+.summary-table tfoot tr { background: var(--card); font-weight: 700; }
+.summary-table tfoot td { padding: 11px 14px; border-top: 2px solid var(--border); }
+
+.who-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.who-martin { background: var(--martin-light); color: var(--martin); }
+.who-anita { background: var(--anita-light); color: var(--anita); }
+.who-compartido { background: var(--shared-light); color: var(--shared); }
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  transition: all .12s;
+}
+.delete-btn:hover { background: #fee; color: var(--danger); }
+
+/* Detail list */
+.detail-section { padding: 0 24px 24px; }
+.detail-title {
+  font-family: 'Fraunces', serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--muted);
+}
+.expense-list { display: flex; flex-direction: column; gap: 6px; }
+.expense-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color .12s;
+}
+.expense-item:hover { border-color: var(--accent); }
+.expense-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-martin { background: var(--martin); }
+.dot-anita { background: var(--anita); }
+.dot-compartido { background: var(--shared); }
+.expense-desc { flex: 1; font-size: 13px; font-weight: 500; }
+.expense-cat { font-size: 10px; color: var(--muted); }
+.expense-amount {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.expense-split {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
+.empty-text { font-family: 'Fraunces', serif; font-size: 16px; }
+
+@media(max-width: 768px) {
+  .balance-strip { grid-template-columns: 1fr; }
+  .layout { flex-direction: column; height: auto; overflow: visible; }
+  .form-panel { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">Gastos <span>Compartidos</span></div>
+  <div class="month-selector">
+    <button class="month-btn" onclick="prevMonth()">‹</button>
+    <span class="month-label" id="monthLabel">—</span>
+    <button class="month-btn" onclick="nextMonth()">›</button>
+  </div>
+</div>
+
+<div class="balance-strip">
+  <div class="balance-card">
+    <div class="balance-label">Martin pagó</div>
+    <div class="balance-amount martin" id="balMartin">$0</div>
+    <div class="balance-sub" id="balMartinSub"></div>
+  </div>
+  <div class="balance-card">
+    <div class="balance-label">Anita pagó</div>
+    <div class="balance-amount anita" id="balAnita">$0</div>
+    <div class="balance-sub" id="balAnitaSub"></div>
+  </div>
+  <div class="balance-card">
+    <div class="balance-label">Neto gastos</div>
+    <div class="balance-amount result" id="balNeto">—</div>
+    <div class="balance-sub" id="balNetoBadge"></div>
+  </div>
+</div>
+<div class="balance-strip" style="border-top:2px dashed var(--border)">
+  <div class="balance-card">
+    <div class="balance-label">Tarjetas Martin</div>
+    <div class="balance-amount martin" id="balTarjMartin">—</div>
+    <div class="balance-sub" id="balTarjMartinSub" style="font-size:10px;color:var(--muted)">sin datos</div>
+  </div>
+  <div class="balance-card">
+    <div class="balance-label">Tarjetas Anita</div>
+    <div class="balance-amount anita" id="balTarjAnita">—</div>
+    <div class="balance-sub" id="balTarjAnitaSub" style="font-size:10px;color:var(--muted)">sin datos</div>
+  </div>
+  <div class="balance-card" style="background:var(--card)">
+    <div class="balance-label" style="font-weight:700">Resultado Final</div>
+    <div class="balance-amount result" id="balResult" style="font-size:28px">—</div>
+    <div id="balBadge"></div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- FORM -->
+  <aside class="form-panel">
+    <div>
+      <div class="form-section-title">Nuevo gasto</div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Descripción</div>
+      <input class="form-input" id="fDesc" type="text" placeholder="Ej: Edesur, Expensas…">
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Monto $</div>
+      <input class="form-input" id="fMonto" type="number" min="0" placeholder="0,00">
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Mes</div>
+      <input class="form-input" id="fMes" type="text" placeholder="Abr-26">
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Categoría</div>
+      <div class="cat-pills" id="catPills"></div>
+      <input class="form-input" id="fCatCustom" type="text" placeholder="O escribí una nueva…" style="margin-top:6px">
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">¿Quién pagó?</div>
+      <div class="quien-group">
+        <div class="quien-btn martin active" data-val="Martin" onclick="selectQuien(this)">Martin</div>
+        <div class="quien-btn anita" data-val="Anita" onclick="selectQuien(this)">Anita</div>
+        <div class="quien-btn compartido" data-val="Ambos" onclick="selectQuien(this)">Ambos</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">¿A quién le corresponde?</div>
+      <div class="split-group">
+        <div class="split-btn active" data-val="50/50" onclick="selectSplit(this)">50 / 50</div>
+        <div class="split-btn" data-val="Martin" onclick="selectSplit(this)">Martin</div>
+        <div class="split-btn" data-val="Anita" onclick="selectSplit(this)">Anita</div>
+        <div class="split-btn" data-val="custom" onclick="selectSplit(this)">% Custom</div>
+      </div>
+    </div>
+    <div id="customSplitWrap" style="display:none">
+      <div class="form-group">
+        <div class="form-label">% de Martin</div>
+        <input class="form-input" id="fSplitPct" type="number" min="0" max="100" placeholder="50" value="50">
+      </div>
+    </div>
+
+    <button class="add-btn" onclick="addExpense()">+ Agregar gasto</button>
+    <div id="syncStatus" style="font-size:11px;text-align:center;color:#8a8478;margin-top:4px;min-height:16px"></div>
+
+    <hr class="divider">
+
+    <div class="form-group">
+      <div class="form-label">Importar desde Google Sheets</div>
+      <input class="form-input" id="fSheetUrl" type="text" placeholder="URL del Apps Script" value="https://script.google.com/macros/s/AKfycbyh30ik1RC_uqLHRlV07X2sD4nqSu3gOv3TEUweDgX5PquD-7eun6nm8fEZkLxPdTru/exec">
+      <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap">Filtrar mes:</label>
+        <input class="form-input" id="fSheetMes" type="text" placeholder="Mar-26" style="flex:1">
+      </div>
+      <button class="add-btn" style="margin-top:6px;background:#2d5016" onclick="importFromSheet()">↓ Importar</button>
+      <button class="add-btn" style="margin-top:6px;background:#666;font-size:11px" onclick="fixSplitPct()">⚙ Corregir 50/50 en datos existentes</button>
+      <div id="importStatus" style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+
+    <div style="padding:0 24px;margin-bottom:12px;">
+      <div id="mesPills" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-title">Detalle de gastos</div>
+      <div class="expense-list" id="expenseList"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh30ik1RC_uqLHRlV07X2sD4nqSu3gOv3TEUweDgX5PquD-7eun6nm8fEZkLxPdTru/exec';
+const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+let TARJETAS_DATA = [];
+
+// ── SHEET SYNC ────────────────────────────────────────────────────────────────
+async function writeToSheet(action, data) {
+  const statusEl = document.getElementById('syncStatus');
+  if (statusEl) statusEl.textContent = action==='add'?'Guardando en Sheet…':'Eliminando del Sheet…';
+  try {
+    // Use GET params — Apps Script doesn't support CORS POST from external pages
+    const params = new URLSearchParams({ action, ...data });
+    const res = await fetch(`${SCRIPT_URL}?${params.toString()}`, { redirect: 'follow' });
+    const json = await res.json();
+    if (!json.ok) {
+      console.warn('Sheet write error:', json.error);
+      if (statusEl) statusEl.textContent = '⚠ ' + (json.error || 'Error al guardar');
+      return false;
+    }
+    if (statusEl) { statusEl.textContent='✓ Guardado en Sheet'; setTimeout(()=>statusEl.textContent='',2500); }
+    return true;
+  } catch(e) {
+    console.warn('Sheet write failed:', e);
+    if (statusEl) statusEl.textContent='⚠ Sin conexión al Sheet';
+    return false;
+  }
+}
+const DEFAULT_CATS = ['Servicios','Expensas','Jardin de Paz','Seguro Auto','Supermercado','Gastronomía','Salud','Varios'];
+
+let currentYear = new Date().getFullYear();
+let mesFilter = 'all';
+let currentMonth = new Date().getMonth(); // 0-indexed
+let selectedQuien = 'Martin';
+let selectedSplit = '50/50';
+let selectedCat = '';
+
+// Load from localStorage
+function storageKey() { return `gastos_${currentYear}_${currentMonth}`; }
+function loadExpenses() {
+  try { return JSON.parse(localStorage.getItem(storageKey()) || '[]'); } catch(e) { return []; }
+}
+function saveExpenses(data) { localStorage.setItem(storageKey(), JSON.stringify(data)); }
+
+// ── MONTH NAV ─────────────────────────────────────────────────────────────────
+function updateMonthLabel() {
+  document.getElementById('monthLabel').textContent = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
+  document.getElementById('monthTag').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+}
+function prevMonth() {
+  currentMonth--; if(currentMonth < 0) { currentMonth = 11; currentYear--; }
+  updateMonthLabel();
+  document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
+  render();
+}
+function nextMonth() {
+  currentMonth++; if(currentMonth > 11) { currentMonth = 0; currentYear++; }
+  updateMonthLabel();
+  document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
+  render();
+}
+
+// ── FORM ──────────────────────────────────────────────────────────────────────
+function buildCatPills() {
+  const wrap = document.getElementById('catPills');
+  wrap.innerHTML = DEFAULT_CATS.map(c =>
+    `<div class="cat-pill${selectedCat===c?' active':''}" onclick="selectCat('${c}')">${c}</div>`
+  ).join('');
+}
+function selectCat(c) {
+  selectedCat = selectedCat === c ? '' : c;
+  document.getElementById('fCatCustom').value = '';
+  buildCatPills();
+}
+function selectQuien(el) {
+  selectedQuien = el.dataset.val;
+  document.querySelectorAll('.quien-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function selectSplit(el) {
+  selectedSplit = el.dataset.val;
+  document.querySelectorAll('.split-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('customSplitWrap').style.display = selectedSplit === 'custom' ? 'block' : 'none';
+}
+
+async function saveExpenseToSheet(expense) {
+  const url = getScriptUrl();
+  if (!url) return; // no URL saved, skip silently
+  try {
+    await fetch(url, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        desc: expense.desc,
+        mes: expense.date,
+        monto: expense.monto,
+        quien: expense.quien
+      })
+    });
+  } catch(e) {
+    console.warn('No se pudo guardar en Sheet:', e.message);
+  }
+}
+
+function addExpense() {
+  const desc = document.getElementById('fDesc').value.trim();
+  const monto = parseFloat(document.getElementById('fMonto').value);
+  const cat = document.getElementById('fCatCustom').value.trim() || selectedCat || 'Varios';
+  if (!desc || !monto || monto <= 0) { alert('Completá descripción y monto'); return; }
+
+  // splitPct = % que le corresponde a Martin
+  let splitPct = 50;
+  if (selectedSplit === 'Martin') splitPct = 100;
+  else if (selectedSplit === 'Anita') splitPct = 0;
+  else if (selectedSplit === 'custom') splitPct = parseFloat(document.getElementById('fSplitPct').value) || 50;
+
+  // pagadoPor = quien desembolsó el dinero (independiente de a quién le corresponde)
+  const pagadoPorMartin = selectedQuien==='Martin' ? monto : selectedQuien==='Ambos' ? monto/2 : 0;
+  const pagadoPorAnita  = selectedQuien==='Anita'  ? monto : selectedQuien==='Ambos' ? monto/2 : 0;
+
+  const expenses = loadExpenses();
+  expenses.push({
+    id: Date.now(),
+    desc, monto, cat,
+    quien: selectedQuien,
+    corresponde: selectedSplit,
+    splitPct,
+    pagadoPorMartin,
+    pagadoPorAnita,
+    date: document.getElementById('fMes').value.trim() || `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`
+  });
+  saveExpenses(expenses);
+  // Write to Sheet async
+  const newExp = expenses[expenses.length-1];
+  writeToSheet('add', { desc: newExp.desc, mes: newExp.date, monto: newExp.monto, quien: newExp.quien, splitPct: newExp.splitPct, pagadoPorMartin: newExp.pagadoPorMartin, pagadoPorAnita: newExp.pagadoPorAnita });
+
+  // Reset form
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fMonto').value = '';
+  selectedCat = '';
+  buildCatPills();
+  render();
+}
+
+function deleteExpense(id) {
+  const all = loadExpenses();
+  const toDelete = all.find(e => e.id === id);
+  const expenses = all.filter(e => e.id !== id);
+  saveExpenses(expenses);
+  if (toDelete) writeToSheet('delete', { desc: toDelete.desc, mes: toDelete.date });
+  render();
+}
+
+// ── CALCULATIONS ──────────────────────────────────────────────────────────────
+function calcBalance(expenses) {
+  let martinPaid = 0, anitaPaid = 0;
+  let martinOwes = 0, anitaOwes = 0;
+
+  expenses.forEach(e => {
+    // OWES: what each person should pay based on split %
+    martinOwes += e.monto * (e.splitPct / 100);
+    anitaOwes  += e.monto * ((100 - e.splitPct) / 100);
+
+    // PAID: who actually put the money out
+    // pagadoPorMartin/pagadoPorAnita = explicitly stored amounts paid
+    // These come from col C/D of the Sheet (who paid, not who owes)
+    if (e.pagadoPorMartin !== undefined) {
+      martinPaid += e.pagadoPorMartin;
+      anitaPaid  += e.pagadoPorAnita;
+    } else {
+      // Fallback: quien paid the full monto
+      if (e.quien === 'Martin')     martinPaid += e.monto;
+      else if (e.quien === 'Anita') anitaPaid  += e.monto;
+      else { martinPaid += e.monto/2; anitaPaid += e.monto/2; }
+    }
+  });
+
+  const net = martinPaid - martinOwes;
+  return { martinPaid, anitaPaid, martinOwes, anitaOwes, net };
+}
+
+const fmtP = v => '$ ' + Math.abs(v).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function buildMesPills() {
+  const MORD=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const all = loadExpenses();
+  const meses = [...new Set(all.map(e=>e.date).filter(Boolean))].sort((a,b)=>{
+    // dates stored as mes strings like "Abr-26"
+    const matchA=a.match(/^([A-Za-z]{3})-(\d{2})$/), matchB=b.match(/^([A-Za-z]{3})-(\d{2})$/);
+    if (!matchA||!matchB) return 0;
+    return (parseInt(matchA[2])-parseInt(matchB[2]))||(MORD.indexOf(matchA[1])-MORD.indexOf(matchB[1]));
+  });
+  const wrap = document.getElementById('mesPills');
+  if (meses.length <= 1) { wrap.innerHTML=''; return; }
+  wrap.innerHTML = ['all',...meses].map(m => {
+    const active = mesFilter===m;
+    return `<div onclick="setMesFilter('${m}')" style="
+      padding:3px 10px;border-radius:20px;font-size:10.5px;cursor:pointer;
+      border:1.5px solid ${active?'#c8a84b':'#e8e4dc'};
+      background:${active?'#c8a84b':'#faf9f6'};
+      color:${active?'#000':'#1a1814'};opacity:${active?'1':'.6'};
+      font-weight:${active?'700':'500'};white-space:nowrap;transition:all .12s;
+    ">${m==='all'?'Todos':m}</div>`;
+  }).join('');
+}
+
+function setMesFilter(m) {
+  mesFilter = m;
+  buildMesPills();
+  render();
+}
+
+function render() {
+  const allExpenses = loadExpenses();
+  const expenses = mesFilter==='all' ? allExpenses : allExpenses.filter(e=>e.date===mesFilter);
+  const bal = calcBalance(expenses);
+
+  // ── Gastos balance (sin tarjetas) ──
+  document.getElementById('balMartin').textContent = fmtP(bal.martinPaid);
+  document.getElementById('balMartinSub').textContent = `le corresponde ${fmtP(bal.martinOwes)}`;
+  document.getElementById('balAnita').textContent = fmtP(bal.anitaPaid);
+  document.getElementById('balAnitaSub').textContent = `le corresponde ${fmtP(bal.anitaOwes)}`;
+  const netoGastos = bal.net;
+  document.getElementById('balNeto').textContent = fmtP(netoGastos);
+  document.getElementById('balNetoBadge').innerHTML = Math.abs(netoGastos)<1
+    ? `<span class="result-badge even" style="font-size:10px">✓ Iguales</span>`
+    : netoGastos>0
+    ? `<span class="result-badge owes-anita" style="font-size:10px">Anita debe a Martin</span>`
+    : `<span class="result-badge owes-martin" style="font-size:10px">Martin debe a Anita</span>`;
+
+  // ── Tarjetas section ──
+  const tarjFilt = TARJETAS_DATA.filter(t => mesFilter==='all' || t.mes===mesFilter);
+  if (tarjFilt.length > 0) {
+    const tarjMP = tarjFilt.reduce((s,t)=>s+(t.montoMartin||0),0);
+    const tarjAP = tarjFilt.reduce((s,t)=>s+(t.montoAnita||0),0);
+    const tarjMD = tarjFilt.reduce((s,t)=>s+t.monto*(t.splitPct/100),0);
+    const tarjAD = tarjFilt.reduce((s,t)=>s+t.monto*((100-t.splitPct)/100),0);
+    document.getElementById('balTarjMartin').textContent = fmtP(tarjMP);
+    document.getElementById('balTarjMartinSub').textContent = `le corresponde ${fmtP(tarjMD)}`;
+    document.getElementById('balTarjAnita').textContent = fmtP(tarjAP);
+    document.getElementById('balTarjAnitaSub').textContent = `le corresponde ${fmtP(tarjAD)}`;
+    var netoTarj = tarjMP - tarjMD;
+  } else {
+    ['balTarjMartin','balTarjAnita'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('balTarjMartinSub').textContent='importar para ver';
+    document.getElementById('balTarjAnitaSub').textContent='importar para ver';
+    var netoTarj = 0;
+  }
+
+  // ── Resultado Final ──
+  const resultadoFinal = netoGastos + netoTarj;
+  const absResult = Math.abs(resultadoFinal);
+  const badge = document.getElementById('balBadge');
+  document.getElementById('balResult').textContent = absResult < 1 ? '¡Iguales!' : fmtP(absResult);
+  badge.innerHTML = absResult < 1
+    ? `<span class="result-badge even">✓ Sin deuda</span>`
+    : resultadoFinal > 0
+    ? `<span class="result-badge owes-anita">Anita le debe a Martin</span>`
+    : `<span class="result-badge owes-martin">Martin le debe a Anita</span>`;
+
+
+
+  buildMesPills();
+  // Expense detail list
+  const list = document.getElementById('expenseList');
+  if (!expenses.length) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div><div class="empty-text">Agregá el primer gasto del mes</div></div>`;
+  } else {
+    list.innerHTML = [...expenses].reverse().map(e => {
+      const quienPagoLabel = e.quien==='Ambos'?'Ambos':e.quien;
+    const correspondeLabel = e.splitPct===50?'50/50':e.splitPct===100?'→ Martin':e.splitPct===0?'→ Anita':`${e.splitPct}% M`;
+    const splitLabel = `${quienPagoLabel} pagó · ${correspondeLabel}`;
+      return `<div class="expense-item">
+        <div class="expense-dot dot-${e.quien.toLowerCase()}"></div>
+        <div style="flex:1">
+          <div class="expense-desc">${e.desc}</div>
+          <div class="expense-cat">${e.cat} · ${e.date} · <span class="who-badge who-${e.quien.toLowerCase()}">${e.quien}</span> · ${splitLabel}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="expense-amount">${fmtP(e.monto)}</div>
+          <div class="expense-split">M: ${fmtP(e.monto*e.splitPct/100)} / A: ${fmtP(e.monto*(100-e.splitPct)/100)}</div>
+        </div>
+        <button class="delete-btn" onclick="deleteExpense(${e.id})" title="Eliminar">✕</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ── SCRIPT URL PERSISTENCE ───────────────────────────────────────────────────
+function getScriptUrl() { return localStorage.getItem('comp_script_url') || ''; }
+function saveScriptUrl(url) { if(url) localStorage.setItem('comp_script_url', url); }
+
+// ── IMPORT FROM SHEET ─────────────────────────────────────────────────────────
+async function importFromSheet() {
+  const url = document.getElementById('fSheetUrl').value.trim();
+  if (!url) { setImportStatus('Pegá la URL del Apps Script', 'error'); return; }
+
+  const mesInput = document.getElementById('fSheetMes').value.trim();
+  // Use current month if not specified
+  const mes = mesInput || `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
+
+  saveScriptUrl(url);
+  setImportStatus('Importando…', 'loading');
+  try {
+    const fullUrl = url + (url.includes('?') ? '&' : '?') + `mes=${encodeURIComponent(mes)}`;
+    const res = await fetch(fullUrl, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    // Store tarjetas separately
+    TARJETAS_DATA = (json.tarjetas || []).map(t => ({
+      ...t, mes: t.mes
+    }));
+
+    // Remove existing imported rows for this month to avoid duplicates
+    let expenses = loadExpenses().filter(e => e.source !== 'sheet');
+
+    (json.data || []).forEach(row => {
+      expenses.push({
+        id: Date.now() + Math.random(),
+        desc: row.desc,
+        monto: row.monto || 0,
+        cat: row.desc,
+        quien: row.quien || 'Martin',
+        splitPct: row.splitPct !== undefined ? row.splitPct : 50,
+        pagadoPorMartin: row.montoMartin || 0,
+        pagadoPorAnita:  row.montoAnita  || 0,
+        date: row.mes || mes || `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`,
+        source: 'sheet'
+      });
+    });
+
+    saveExpenses(expenses);
+    render();
+    setImportStatus(`✓ ${json.data.length} gastos de ${mes}`, 'ok');
+  } catch(e) {
+    setImportStatus('Error: ' + e.message, 'error');
+  }
+}
+
+function setImportStatus(msg, type) {
+  const el = document.getElementById('importStatus');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? 'var(--danger)' : type === 'ok' ? 'var(--green)' : 'var(--muted)';
+}
+
+// ── FIX SPLITPCT ─────────────────────────────────────────────────────────────
+function fixSplitPct() {
+  // Fix all months in localStorage
+  let fixed = 0;
+  for (let y = 2024; y <= 2027; y++) {
+    for (let m = 0; m <= 11; m++) {
+      const key = `gastos_${y}_${m}`;
+      try {
+        const data = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!data.length) continue;
+        const updated = data.map(e => ({ ...e, splitPct: 50 }));
+        localStorage.setItem(key, JSON.stringify(updated));
+        fixed += updated.length;
+      } catch(e) {}
+    }
+  }
+  alert(`✓ Corregidos ${fixed} gastos a 50/50`);
+  render();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Restore saved script URL
+const savedUrl = getScriptUrl(); if(savedUrl) document.getElementById('fSheetUrl').value = savedUrl;
+updateMonthLabel();
+buildCatPills();
+// Set default mes field to current month
+document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
+// Set Martin as default selected
+document.querySelector('.quien-btn.martin').classList.add('active');
+render();
+</script>
+</body>
+</html>
