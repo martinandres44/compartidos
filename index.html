@@ -405,14 +405,18 @@ body {
 </div>
 <div class="balance-strip" style="border-top:2px dashed var(--border)">
   <div class="balance-card">
-    <div class="balance-label">Tarjetas Martin</div>
-    <div class="balance-amount martin" id="balTarjMartin">—</div>
-    <div class="balance-sub" id="balTarjMartinSub" style="font-size:10px;color:var(--muted)">sin datos</div>
+    <div class="balance-label">Tarjetas Martin debe</div>
+    <input id="inpTarjMartin" type="number" min="0" placeholder="0"
+      oninput="updateResultado()"
+      style="width:100%;margin-top:6px;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:#2d5016;outline:none;">
+    <div class="balance-sub">lo que Martin debe pagar a Anita</div>
   </div>
   <div class="balance-card">
-    <div class="balance-label">Tarjetas Anita</div>
-    <div class="balance-amount anita" id="balTarjAnita">—</div>
-    <div class="balance-sub" id="balTarjAnitaSub" style="font-size:10px;color:var(--muted)">sin datos</div>
+    <div class="balance-label">Tarjetas Anita debe</div>
+    <input id="inpTarjAnita" type="number" min="0" placeholder="0"
+      oninput="updateResultado()"
+      style="width:100%;margin-top:6px;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:#7c1d3a;outline:none;">
+    <div class="balance-sub">lo que Anita debe pagar a Martin</div>
   </div>
   <div class="balance-card" style="background:var(--card)">
     <div class="balance-label" style="font-weight:700">Resultado Final</div>
@@ -481,7 +485,7 @@ body {
 
     <div class="form-group">
       <div class="form-label">Importar desde Google Sheets</div>
-      <input class="form-input" id="fSheetUrl" type="text" placeholder="URL del Apps Script" value="https://script.google.com/macros/s/AKfycbyh30ik1RC_uqLHRlV07X2sD4nqSu3gOv3TEUweDgX5PquD-7eun6nm8fEZkLxPdTru/exec">
+      <input class="form-input" id="fSheetUrl" type="text" placeholder="URL del Apps Script" value="https://script.google.com/macros/s/AKfycbx4fD2cepVEXOJoo1xsVSXrxxQYFeUTWOP8NinIYtEPUUg4mRghFSZic6UtW0QQnZkH/exec">
       <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
         <label style="font-size:11px;color:var(--muted);white-space:nowrap">Filtrar mes:</label>
         <input class="form-input" id="fSheetMes" type="text" placeholder="Mar-26" style="flex:1">
@@ -508,7 +512,7 @@ body {
 
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyh30ik1RC_uqLHRlV07X2sD4nqSu3gOv3TEUweDgX5PquD-7eun6nm8fEZkLxPdTru/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4fD2cepVEXOJoo1xsVSXrxxQYFeUTWOP8NinIYtEPUUg4mRghFSZic6UtW0QQnZkH/exec';
 const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 let TARJETAS_DATA = [];
 
@@ -720,6 +724,30 @@ function setMesFilter(m) {
   render();
 }
 
+function updateResultado() {
+  const netoGastos = parseFloat(document.getElementById('balNeto').textContent.replace(/[^0-9,\-]/g,'').replace(',','.')) || 0;
+  const tarjMartinDebe = parseFloat(document.getElementById('inpTarjMartin').value) || 0;
+  const tarjAnitaDebe  = parseFloat(document.getElementById('inpTarjAnita').value)  || 0;
+  // netoGastos > 0 = Anita debe a Martin (gastos)
+  // tarjMartinDebe = Martin debe a Anita por tarjetas
+  // tarjAnitaDebe  = Anita debe a Martin por tarjetas
+  // Final desde perspectiva de Martin:
+  // positivo = Anita le debe a Martin, negativo = Martin le debe a Anita
+  const netoGastosVal = document.getElementById('balNetoBadge').innerHTML.includes('Anita debe') ? Math.abs(netoGastos) : -Math.abs(netoGastos);
+  const resultadoFinal = netoGastosVal + tarjAnitaDebe - tarjMartinDebe;
+  const absResult = Math.abs(resultadoFinal);
+  const badge = document.getElementById('balBadge');
+  document.getElementById('balResult').textContent = absResult < 1 ? '¡Iguales!' : fmtP(absResult);
+  badge.innerHTML = absResult < 1
+    ? `<span class="result-badge even">✓ Sin deuda</span>`
+    : resultadoFinal > 0
+    ? `<span class="result-badge owes-anita">Anita le debe a Martin</span>`
+    : `<span class="result-badge owes-martin">Martin le debe a Anita</span>`;
+  // Persist values
+  localStorage.setItem('tarj_martin', tarjMartinDebe);
+  localStorage.setItem('tarj_anita',  tarjAnitaDebe);
+}
+
 function render() {
   const allExpenses = loadExpenses();
   const expenses = mesFilter==='all' ? allExpenses : allExpenses.filter(e=>e.date===mesFilter);
@@ -740,33 +768,7 @@ function render() {
 
   // ── Tarjetas section ──
   const tarjFilt = TARJETAS_DATA.filter(t => mesFilter==='all' || t.mes===mesFilter);
-  if (tarjFilt.length > 0) {
-    const tarjMP = tarjFilt.reduce((s,t)=>s+(t.montoMartin||0),0);
-    const tarjAP = tarjFilt.reduce((s,t)=>s+(t.montoAnita||0),0);
-    const tarjMD = tarjFilt.reduce((s,t)=>s+t.monto*(t.splitPct/100),0);
-    const tarjAD = tarjFilt.reduce((s,t)=>s+t.monto*((100-t.splitPct)/100),0);
-    document.getElementById('balTarjMartin').textContent = fmtP(tarjMP);
-    document.getElementById('balTarjMartinSub').textContent = `le corresponde ${fmtP(tarjMD)}`;
-    document.getElementById('balTarjAnita').textContent = fmtP(tarjAP);
-    document.getElementById('balTarjAnitaSub').textContent = `le corresponde ${fmtP(tarjAD)}`;
-    var netoTarj = tarjMP - tarjMD;
-  } else {
-    ['balTarjMartin','balTarjAnita'].forEach(id=>document.getElementById(id).textContent='—');
-    document.getElementById('balTarjMartinSub').textContent='importar para ver';
-    document.getElementById('balTarjAnitaSub').textContent='importar para ver';
-    var netoTarj = 0;
-  }
-
-  // ── Resultado Final ──
-  const resultadoFinal = netoGastos + netoTarj;
-  const absResult = Math.abs(resultadoFinal);
-  const badge = document.getElementById('balBadge');
-  document.getElementById('balResult').textContent = absResult < 1 ? '¡Iguales!' : fmtP(absResult);
-  badge.innerHTML = absResult < 1
-    ? `<span class="result-badge even">✓ Sin deuda</span>`
-    : resultadoFinal > 0
-    ? `<span class="result-badge owes-anita">Anita le debe a Martin</span>`
-    : `<span class="result-badge owes-martin">Martin le debe a Anita</span>`;
+  updateResultado();
 
 
 
@@ -882,6 +884,9 @@ function fixSplitPct() {
 const savedUrl = getScriptUrl(); if(savedUrl) document.getElementById('fSheetUrl').value = savedUrl;
 updateMonthLabel();
 buildCatPills();
+// Restore tarjeta inputs
+const tm = localStorage.getItem('tarj_martin'); if(tm) document.getElementById('inpTarjMartin').value = tm;
+const ta = localStorage.getItem('tarj_anita');  if(ta) document.getElementById('inpTarjAnita').value  = ta;
 // Set default mes field to current month
 document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 // Set Martin as default selected
