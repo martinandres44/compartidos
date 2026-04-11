@@ -404,18 +404,20 @@ body {
   </div>
 </div>
 <div class="balance-strip" style="border-top:2px dashed var(--border)">
-  <div class="balance-card">
-    <div class="balance-label">Tarjetas Martin debe</div>
+  <div class="balance-card" onclick="editTarj('Martin')" style="cursor:pointer">
+    <div class="balance-label">Tarjetas Martin debe <span style="font-size:9px;opacity:.5">✎</span></div>
+    <div id="dispTarjMartin" class="balance-amount martin" style="font-size:22px">$ 0</div>
     <input id="inpTarjMartin" type="number" min="0" placeholder="0"
-      oninput="updateResultado()"
-      style="width:100%;margin-top:6px;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:#2d5016;outline:none;">
+      style="display:none;width:100%;margin-top:4px;padding:6px 10px;background:var(--bg);border:1.5px solid #2d5016;border-radius:8px;font-size:18px;font-weight:700;color:#2d5016;outline:none;font-family:'Fraunces',serif;"
+      onkeydown="if(event.key==='Enter')confirmTarj('Martin')" onblur="confirmTarj('Martin')">
     <div class="balance-sub">lo que Martin debe pagar a Anita</div>
   </div>
-  <div class="balance-card">
-    <div class="balance-label">Tarjetas Anita debe</div>
+  <div class="balance-card" onclick="editTarj('Anita')" style="cursor:pointer">
+    <div class="balance-label">Tarjetas Anita debe <span style="font-size:9px;opacity:.5">✎</span></div>
+    <div id="dispTarjAnita" class="balance-amount anita" style="font-size:22px">$ 0</div>
     <input id="inpTarjAnita" type="number" min="0" placeholder="0"
-      oninput="updateResultado()"
-      style="width:100%;margin-top:6px;padding:6px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:#7c1d3a;outline:none;">
+      style="display:none;width:100%;margin-top:4px;padding:6px 10px;background:var(--bg);border:1.5px solid #7c1d3a;border-radius:8px;font-size:18px;font-weight:700;color:#7c1d3a;outline:none;font-family:'Fraunces',serif;"
+      onkeydown="if(event.key==='Enter')confirmTarj('Anita')" onblur="confirmTarj('Anita')">
     <div class="balance-sub">lo que Anita debe pagar a Martin</div>
   </div>
   <div class="balance-card" style="background:var(--card)">
@@ -724,10 +726,32 @@ function setMesFilter(m) {
   render();
 }
 
+function editTarj(who) {
+  const inp = document.getElementById('inpTarj' + who);
+  const disp = document.getElementById('dispTarj' + who);
+  disp.style.display = 'none';
+  inp.style.display = 'block';
+  inp.focus();
+  inp.select();
+}
+
+function confirmTarj(who) {
+  const inp = document.getElementById('inpTarj' + who);
+  const disp = document.getElementById('dispTarj' + who);
+  const val = parseFloat(inp.value) || 0;
+  disp.textContent = fmtP(val);
+  inp.style.display = 'none';
+  disp.style.display = 'block';
+  updateResultado();
+}
+
 function updateResultado() {
   const netoGastos = parseFloat(document.getElementById('balNeto').textContent.replace(/[^0-9,\-]/g,'').replace(',','.')) || 0;
   const tarjMartinDebe = parseFloat(document.getElementById('inpTarjMartin').value) || 0;
   const tarjAnitaDebe  = parseFloat(document.getElementById('inpTarjAnita').value)  || 0;
+  // Update displays if they show default
+  if (document.getElementById('dispTarjMartin').textContent === '$ 0') document.getElementById('dispTarjMartin').textContent = fmtP(tarjMartinDebe);
+  if (document.getElementById('dispTarjAnita').textContent  === '$ 0') document.getElementById('dispTarjAnita').textContent  = fmtP(tarjAnitaDebe);
   // netoGastos > 0 = Anita debe a Martin (gastos)
   // tarjMartinDebe = Martin debe a Anita por tarjetas
   // tarjAnitaDebe  = Anita debe a Martin por tarjetas
@@ -885,8 +909,10 @@ const savedUrl = getScriptUrl(); if(savedUrl) document.getElementById('fSheetUrl
 updateMonthLabel();
 buildCatPills();
 // Restore tarjeta inputs
-const tm = localStorage.getItem('tarj_martin'); if(tm) document.getElementById('inpTarjMartin').value = tm;
-const ta = localStorage.getItem('tarj_anita');  if(ta) document.getElementById('inpTarjAnita').value  = ta;
+const tm = localStorage.getItem('tarj_martin');
+if(tm){ document.getElementById('inpTarjMartin').value=tm; document.getElementById('dispTarjMartin').textContent=fmtP(parseFloat(tm)||0); }
+const ta = localStorage.getItem('tarj_anita');
+if(ta){ document.getElementById('inpTarjAnita').value=ta; document.getElementById('dispTarjAnita').textContent=fmtP(parseFloat(ta)||0); }
 // Set default mes field to current month
 document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 // Set Martin as default selected
