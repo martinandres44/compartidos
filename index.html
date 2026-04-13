@@ -874,6 +874,7 @@ async function importFromSheet(silent=false) {
     if(!silent) setImportStatus(`✓ ${json.data.length} gastos de ${mes}`, 'ok');
   } catch(e) {
     if(!silent) setImportStatus('Error: ' + e.message, 'error');
+    render(); // still render local data even if import failed
   }
 }
 
@@ -913,13 +914,12 @@ const tm = localStorage.getItem('tarj_martin');
 if(tm){ document.getElementById('inpTarjMartin').value=tm; document.getElementById('dispTarjMartin').textContent=fmtP(parseFloat(tm)||0); }
 const ta = localStorage.getItem('tarj_anita');
 if(ta){ document.getElementById('inpTarjAnita').value=ta; document.getElementById('dispTarjAnita').textContent=fmtP(parseFloat(ta)||0); }
-// Auto-import on load
-importFromSheet(true);
 // Set default mes field to current month
 document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 // Set Martin as default selected
 document.querySelector('.quien-btn.martin').classList.add('active');
-render();
+// Auto-import on load — render() is called inside importFromSheet when done
+importFromSheet(true);
 </script>
 </body>
 </html>
