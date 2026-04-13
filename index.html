@@ -559,7 +559,7 @@ function saveExpenses(data) { localStorage.setItem(storageKey(), JSON.stringify(
 // ── MONTH NAV ─────────────────────────────────────────────────────────────────
 function updateMonthLabel() {
   document.getElementById('monthLabel').textContent = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
-  document.getElementById('monthTag').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+  const mt = document.getElementById('monthTag'); if(mt) mt.textContent = `${MONTHS[currentMonth]} ${currentYear}`;
 }
 function prevMonth() {
   currentMonth--; if(currentMonth < 0) { currentMonth = 11; currentYear--; }
@@ -917,3 +917,5 @@ setTimeout(() => importFromSheet(true), 100); // then fetch fresh data
 </script>
 </body>
 </html>
+render();
+setTimeout(() => importFromSheet(true), 200);
