@@ -677,17 +677,10 @@ function calcBalance(expenses) {
     anitaOwes  += e.monto * ((100 - e.splitPct) / 100);
 
     // PAID: who actually put the money out
-    // pagadoPorMartin/pagadoPorAnita = explicitly stored amounts paid
-    // These come from col C/D of the Sheet (who paid, not who owes)
-    if (e.pagadoPorMartin !== undefined) {
-      martinPaid += e.pagadoPorMartin;
-      anitaPaid  += e.pagadoPorAnita;
-    } else {
-      // Fallback: quien paid the full monto
-      if (e.quien === 'Martin')     martinPaid += e.monto;
-      else if (e.quien === 'Anita') anitaPaid  += e.monto;
-      else { martinPaid += e.monto/2; anitaPaid += e.monto/2; }
-    }
+    // quien paid = who actually put the money out
+    if (e.quien === 'Martin')      martinPaid += e.monto;
+    else if (e.quien === 'Anita')  anitaPaid  += e.monto;
+    else { martinPaid += e.monto/2; anitaPaid += e.monto/2; }
   });
 
   const net = martinPaid - martinOwes;
@@ -836,7 +829,7 @@ async function importFromSheet(silent=false) {
   const mes = mesInput || `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 
   saveScriptUrl(url);
-  setImportStatus('Importando…', 'loading');
+  if(!silent) setImportStatus('Importando…', 'loading');
   try {
     const fullUrl = url + (url.includes('?') ? '&' : '?') + `mes=${encodeURIComponent(mes)}`;
     const res = await fetch(fullUrl, {
@@ -918,8 +911,9 @@ if(ta){ document.getElementById('inpTarjAnita').value=ta; document.getElementByI
 document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 // Set Martin as default selected
 document.querySelector('.quien-btn.martin').classList.add('active');
-// Auto-import on load — render() is called inside importFromSheet when done
-importFromSheet(true);
+// Auto-import on load
+render(); // show local data immediately
+setTimeout(() => importFromSheet(true), 100); // then fetch fresh data
 </script>
 </body>
 </html>
