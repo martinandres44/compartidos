@@ -821,8 +821,8 @@ function saveScriptUrl(url) { if(url) localStorage.setItem('comp_script_url', ur
 
 // ── IMPORT FROM SHEET ─────────────────────────────────────────────────────────
 async function importFromSheet(silent=false) {
-  const url = document.getElementById('fSheetUrl').value.trim();
-  if (!url) { setImportStatus('Pegá la URL del Apps Script', 'error'); return; }
+  const url = SCRIPT_URL || document.getElementById('fSheetUrl').value.trim();
+  if (!url) { if(!silent) setImportStatus('Pegá la URL del Apps Script', 'error'); return; }
 
   const mesInput = document.getElementById('fSheetMes').value.trim();
   // Use current month if not specified
