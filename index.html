@@ -827,7 +827,7 @@ function getScriptUrl() { return localStorage.getItem('comp_script_url') || ''; 
 function saveScriptUrl(url) { if(url) localStorage.setItem('comp_script_url', url); }
 
 // ── IMPORT FROM SHEET ─────────────────────────────────────────────────────────
-async function importFromSheet() {
+async function importFromSheet(silent=false) {
   const url = document.getElementById('fSheetUrl').value.trim();
   if (!url) { setImportStatus('Pegá la URL del Apps Script', 'error'); return; }
 
@@ -871,9 +871,9 @@ async function importFromSheet() {
 
     saveExpenses(expenses);
     render();
-    setImportStatus(`✓ ${json.data.length} gastos de ${mes}`, 'ok');
+    if(!silent) setImportStatus(`✓ ${json.data.length} gastos de ${mes}`, 'ok');
   } catch(e) {
-    setImportStatus('Error: ' + e.message, 'error');
+    if(!silent) setImportStatus('Error: ' + e.message, 'error');
   }
 }
 
@@ -913,6 +913,8 @@ const tm = localStorage.getItem('tarj_martin');
 if(tm){ document.getElementById('inpTarjMartin').value=tm; document.getElementById('dispTarjMartin').textContent=fmtP(parseFloat(tm)||0); }
 const ta = localStorage.getItem('tarj_anita');
 if(ta){ document.getElementById('inpTarjAnita').value=ta; document.getElementById('dispTarjAnita').textContent=fmtP(parseFloat(ta)||0); }
+// Auto-import on load
+importFromSheet(true);
 // Set default mes field to current month
 document.getElementById('fMes').value = `${MONTHS[currentMonth]}-${String(currentYear).slice(-2)}`;
 // Set Martin as default selected
