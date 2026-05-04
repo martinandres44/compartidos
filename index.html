@@ -512,6 +512,7 @@ body {
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx4fD2cepVEXOJoo1xsVSXrxxQYFeUTWOP8NinIYtEPUUg4mRghFSZic6UtW0QQnZkH/exec';
 const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 let TARJETAS_DATA = [];
+let _netoGastosVal = 0;
 
 // ── SHEET SYNC ────────────────────────────────────────────────────────────────
 async function writeToSheet(action, data) {
@@ -734,7 +735,7 @@ function confirmTarj(who) {
 }
 
 function updateResultado() {
-  const netoGastos = parseFloat(document.getElementById('balNeto').textContent.replace(/[^0-9,\-]/g,'').replace(',','.')) || 0;
+  const netoGastos = _netoGastosVal;
   const tarjMartinDebe = parseFloat(document.getElementById('inpTarjMartin').value) || 0;
   const tarjAnitaDebe  = parseFloat(document.getElementById('inpTarjAnita').value)  || 0;
   // Update displays if they show default
@@ -745,8 +746,7 @@ function updateResultado() {
   // tarjAnitaDebe  = Anita debe a Martin por tarjetas
   // Final desde perspectiva de Martin:
   // positivo = Anita le debe a Martin, negativo = Martin le debe a Anita
-  const netoGastosVal = document.getElementById('balNetoBadge').innerHTML.includes('Anita debe') ? Math.abs(netoGastos) : -Math.abs(netoGastos);
-  const resultadoFinal = netoGastosVal + tarjAnitaDebe - tarjMartinDebe;
+  const resultadoFinal = netoGastos + tarjAnitaDebe - tarjMartinDebe;
   const absResult = Math.abs(resultadoFinal);
   const badge = document.getElementById('balBadge');
   document.getElementById('balResult').textContent = absResult < 1 ? '¡Iguales!' : fmtP(absResult);
@@ -770,13 +770,7 @@ function render() {
   document.getElementById('balMartinSub').textContent = `le corresponde ${fmtP(bal.martinOwes)}`;
   document.getElementById('balAnita').textContent = fmtP(bal.anitaPaid);
   document.getElementById('balAnitaSub').textContent = `le corresponde ${fmtP(bal.anitaOwes)}`;
-  const netoGastos = bal.net;
-  document.getElementById('balNeto').textContent = fmtP(netoGastos);
-  document.getElementById('balNetoBadge').innerHTML = Math.abs(netoGastos)<1
-    ? `<span class="result-badge even" style="font-size:10px">✓ Iguales</span>`
-    : netoGastos>0
-    ? `<span class="result-badge owes-anita" style="font-size:10px">Anita debe a Martin</span>`
-    : `<span class="result-badge owes-martin" style="font-size:10px">Martin debe a Anita</span>`;
+  _netoGastosVal = bal.net;
 
   // ── Tarjetas section ──
   const tarjFilt = TARJETAS_DATA.filter(t => mesFilter==='all' || t.mes===mesFilter);
