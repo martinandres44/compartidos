@@ -668,9 +668,9 @@ function calcBalance(expenses) {
   let martinOwes = 0, anitaOwes = 0;
 
   expenses.forEach(e => {
-    // OWES: what each person should pay based on split %
-    martinOwes += e.monto * (e.splitPct / 100);
-    anitaOwes  += e.monto * ((100 - e.splitPct) / 100);
+    // OWES: always 50/50 regardless of splitPct
+    martinOwes += e.monto / 2;
+    anitaOwes  += e.monto / 2;
 
     // PAID: who actually put the money out
     // quien paid = who actually put the money out
